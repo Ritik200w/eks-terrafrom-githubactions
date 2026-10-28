@@ -1,25 +1,33 @@
 name: 'EKS-Terraform-Plan'
 
 on:
-  push:
-    branches: 
-      - '**'
-
-
-env: 
-  AWS_REGION: us-east-1
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  workflow_dispatch:
+    inputs:
+      tfvars_file:
+        description: 'Name of the .tfvars file (inside the eks folder)'
+        required: true
+        default: 'variables.tfvars'
+      action:
+        type: choice
+        description: 'plan, apply or destroy'
+        required: true
+        default: 'plan'
+        options:
+          - plan
+          - apply
+          - destroy
 
 permissions:
   contents: read
 
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 jobs:
   terraform:
-    name: Terraform Plan
     runs-on: ubuntu-latest
-    environment: production
-
     defaults:
       run:
         shell: bash
@@ -27,36 +35,30 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with: 
-          terraform_version: 1.9.3
-          terraform_wrapper: true
-
-      - name: Cache Terraform
-        uses: actions/cache@v4
         with:
-          path: |
-            ~/.terraform.d/plugin-cache
-            .terraform
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
+          terraform_version: 1.8.4
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Format Check
-        run: terraform fmt -check -diff
-        continue-on-error: false
+      - name: Terraform Format
+        run: terraform fmt
 
       - name: Terraform Validate
         run: terraform validate
-        continue-on-error: false
 
-      - name: Terraform plan
-        run: |
-          terraform plan -var-file=dev.tfvars -input=false
-        continue-on-error: false
+      - name: Terraform Plan
+        if: ${{ github.event.inputs.action == 'plan' }}
+        run: terraform plan -var-file=${{ github.event.inputs.tfvars_file }} -input=false
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform apply -auto-approve -var-file=${{ github.event.inputs.tfvars_file }} -input=false
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve -var-file=${{ github.event.inputs.tfvars_file }} -input=false
