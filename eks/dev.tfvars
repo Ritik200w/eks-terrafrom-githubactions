@@ -6,10 +6,10 @@ igw-name              = "igw"
 pub-subnet-count      = 3
 pub-cidr-block        = ["10.16.0.0/20", "10.16.16.0/20", "10.16.32.0/20"]
 pub-availability-zone = ["us-east-1a", "us-east-1b", "us-east-1c"]
-pub-sub-name          = "subnet-public"
 pri-subnet-count      = 3
 pri-cidr-block        = ["10.16.128.0/20", "10.16.144.0/20", "10.16.160.0/20"]
 pri-availability-zone = ["us-east-1a", "us-east-1b", "us-east-1c"]
+pub-sub-name          = "subnet-public"
 pri-sub-name          = "subnet-private"
 public-rt-name        = "public-route-table"
 private-rt-name       = "private-route-table"
@@ -19,7 +19,7 @@ eks-sg                = "eks-sg"
 
 # EKS
 is-eks-cluster-enabled     = true
-cluster-version            = "1.xx"
+cluster-version            = "1.34"
 cluster-name               = "eks-cluster"
 endpoint-private-access    = true
 endpoint-public-access     = false
@@ -31,9 +31,22 @@ max_capacity_on_demand     = "5"
 desired_capacity_spot      = "1"
 min_capacity_spot          = "1"
 max_capacity_spot          = "10"
+
 addons = [
-  { name = "vpc-cni",            version = "<from Stage 3>" },
-  { name = "coredns",            version = "<from Stage 3>" },
-  { name = "kube-proxy",         version = "<from Stage 3>" },
-  { name = "aws-ebs-csi-driver", version = "<from Stage 3>" }
+  {
+    name    = "vpc-cni"
+    version = "v1.22.4-eksbuild.8"
+  },
+  {
+    name    = "coredns"
+    version = "v1.12.4-eksbuild.66"
+  },
+  {
+    name    = "kube-proxy"
+    version = "v1.34.6-eksbuild.59"
+  },
+  {
+    name    = "aws-ebs-csi-driver"
+    version = "v1.67.2-eksbuild.1"
+  }
 ]
